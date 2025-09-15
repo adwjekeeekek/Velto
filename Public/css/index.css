@@ -1,0 +1,397 @@
+@font-face {
+  font-family: "Dinopia";
+  src: url(fonts/DinopiaRegular-mLrO9.otf);
+}
+
+@import url("https://fonts.googleapis.com/css2?family=League+Spartan&display=swap");
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  font-family: "League Spartan", sans-serif;
+  background: url(../images/index/image.png) center center / cover no-repeat fixed;
+  position: relative;
+}
+
+.elementos-decorativos {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.rama-decorativa,
+.dinosaurio-volador {
+  position: absolute;
+  height: auto;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.dinosaurio-superpuesto {
+  position: absolute;
+  width: 351px;
+  top: 600px;
+  right: 1650px;
+  pointer-events: none;
+  transform: scaleX(-1);
+  z-index: 200;
+}
+
+.rama-decorativa {
+  width: 844px;
+  top: -166px;
+  left: -164px;
+  transform: scaleX(-1);
+}
+
+.dinosaurio-volador {
+  height: 270px;
+  right: -200px;
+  top: 30px;
+}
+
+.contenedor-principal {
+  position: relative;
+  z-index: 10;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+}
+
+.encabezado {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: 100%;
+  text-align: center;
+}
+
+.titulo-bienvenida {
+  position: relative;
+  padding: 0;
+  margin: 0;
+}
+
+.titulo-principal {
+  font-family: "Dinopia", sans-serif;
+  font-size: 5rem;
+  font-weight: bold;
+  color: moccasin;
+  text-shadow: 2px 2px 6px #000;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.contenedor-video {
+  position: absolute;
+  top: 350px;
+  left: 100px;
+  width: 798px;
+  padding: 15px;
+  border: 8px solid #365126;
+  background-color: #4a6c36;
+  border-radius: 25px;
+  z-index: 100;
+}
+
+.video-responsivo {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.video-elemento {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+.seccion-texto {
+  position: absolute;
+  top: 300px;
+  right: 100px;
+  width: 740px;
+  max-width: 740px;
+}
+
+.texto-principal {
+  font-family: "League Spartan", sans-serif;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: blanchedalmond;
+  text-align: start;
+  text-shadow: 2px 2px 6px #000;
+  hyphens: none;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.seccion-boton {
+  position: absolute;
+  bottom: 80px;
+  right: 200px;
+  z-index: 20;
+}
+
+.boton-madera {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 0;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.mensaje-exito {
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.mensaje-error {
+  background-color: #f44336;
+  color: white;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.boton-madera:hover {
+  transform: scale(1.05);
+}
+
+.boton-madera:active {
+  transform: scale(0.95);
+}
+
+/* Bootstrap responsive fixes */
+.row {
+  margin: 0;
+}
+
+.contenido-principal {
+  margin: 0;
+}
+
+.col-video,
+.col-texto {
+  padding: 0 15px;
+}
+
+/* Bootstrap responsive para tablet/mobile */
+@media (max-width: 991px) {
+
+  .elementos-decorativos,
+  .dinosaurio-superpuesto,
+  .rama-decorativa,
+  .dinosaurio-volador {
+    display: none;
+  }
+
+  body {
+    overflow-y: auto;
+    height: auto;
+  }
+
+  .contenedor-principal {
+    height: auto;
+    padding: 20px;
+  }
+
+  .encabezado {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    margin-bottom: 30px;
+  }
+
+  .titulo-principal {
+    font-size: 3rem;
+    text-align: center;
+  }
+
+  .contenedor-video {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 30px auto;
+    display: block;
+  }
+
+  .seccion-texto {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 30px auto;
+    text-align: center;
+  }
+
+  .texto-principal {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .seccion-boton {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    width: 100%;
+    text-align: center;
+  }
+
+  .boton-madera {
+    height: 150px;
+  }
+}
+
+@media (max-width: 576px) {
+  .titulo-principal {
+    font-size: 2.5rem;
+  }
+
+  .contenedor-video {
+    max-width: 300px;
+    padding: 8px;
+  }
+
+  .seccion-texto {
+    max-width: 300px;
+  }
+
+  .texto-principal {
+    font-size: 1rem;
+  }
+
+  .boton-madera {
+    height: 120px;
+  }
+}
+
+.imagen-madera {
+  height: 250px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Bootstrap media queries para escritorio */
+
+@media (min-width: 1400px) {
+  .dinosaurio-volador {
+    right: 50px;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .dinosaurio-superpuesto {
+    width: 300px;
+    top: 280px;
+    left: 680px;
+  }
+
+  .contenedor-video {
+    width: 680px;
+  }
+
+  .seccion-texto {
+    width: 620px;
+  }
+
+  .texto-principal {
+    font-size: 1.4rem;
+  }
+
+  .dinosaurio-volador {
+    right: 20px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .rama-decorativa {
+    width: 600px;
+    top: -120px;
+    left: -120px;
+  }
+
+  .dinosaurio-superpuesto {
+    width: 280px;
+    top: 350px;
+    left: 560px;
+  }
+
+  .dinosaurio-volador {
+    height: 220px;
+    right: 10px;
+    top: 25px;
+  }
+
+  .titulo-principal {
+    font-size: 4rem;
+  }
+
+  .fila-principal {
+    max-width: 1200px;
+    padding: 0 30px;
+  }
+
+  .col-lg-7 {
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+
+  .contenedor-video {
+    width: 580px;
+  }
+
+  .seccion-texto {
+    width: 520px;
+  }
+
+  .texto-principal {
+    font-size: 1.3rem;
+  }
+
+  .imagen-madera {
+    height: 220px;
+  }
+}
+
+/* Fix for 1024px width screens */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .contenedor-video {
+    width: 550px;
+    left: 40px;
+    top: 280px;
+    max-width: 100%;
+  }
+  .seccion-texto {
+    width: 480px;
+    right: 40px;
+    top: 280px;
+    max-width: 100%;
+  }
+  .titulo-principal {
+    font-size: 3.5rem;
+  }
+  .imagen-madera {
+    height: 200px;
+    max-width: 100%;
+  }
+}

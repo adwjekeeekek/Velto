@@ -1,0 +1,1000 @@
+@import url("https://fonts.googleapis.com/css2?family=League+Spartan&display=swap");
+@font-face {
+  font-family: "Dinopia";
+  src: url(/Public/fonts/DinopiaRegular-mLrO9.otf);
+}
+
+body {
+  font-family: "League Spartan", sans-serif;
+  background: url(/Public/images/4.png) center/cover no-repeat;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 3rem;
+  margin: 0;
+}
+
+/* Contenedor derecho del header */
+.contenedor-derecho {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Mensaje de bienvenida */
+.mensaje-bienvenida {
+  color: #f9e97c;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 6px #000000;
+  margin: 0;
+}
+
+.mensaje-bienvenida strong {
+  color: moccasin;
+  font-size: 1.2rem;
+}
+
+/* Botón de configuración */
+.boton-configuracion {
+  background: linear-gradient(180deg, #964b00, #5c3500);
+  border: 2px solid #c9b089;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #f9e97c;
+}
+
+.boton-configuracion:hover {
+  background: linear-gradient(180deg, #a55b00, #6c3f00);
+  transform: scale(1.05);
+}
+
+.boton-configuracion:focus {
+  outline: 2px solid #f9e97c;
+  outline-offset: 2px;
+}
+
+.boton-configuracion svg {
+  width: 20px;
+  height: 20px;
+}
+
+.boton-configuracion:hover svg {
+  color: moccasin;
+}
+
+/* Títulos */
+hgroup {
+  text-align: left;
+}
+
+#Logo {
+  position: absolute;
+  height: 10vw;
+  width: auto;
+  left: 10vw;
+}
+
+#title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: moccasin;
+  text-shadow: 2px 2px 6px #000000;
+  margin: 0;
+}
+
+#title2 {
+  font-size: 2rem;
+  font-family: "Dinopia", sans-serif;
+  color: #f9e97c;
+  text-shadow: 2px 2px 6px #000000;
+  margin: 0.5rem 0 0 0;
+}
+
+/* Menú de navegación */
+.menu-navegacion {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 300px;
+  height: 100vh;
+  background: linear-gradient(to bottom, #964b00, #5c3500);
+  padding: 2rem;
+  transition: all 0.3s ease;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.menu-navegacion.activo {
+  right: 0;
+  opacity: 1;
+  visibility: visible;
+}
+
+.lista-navegacion {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin-top: 3rem;
+  color: #f9e97c;
+}
+
+.lista-navegacion li {
+  font-family: "League Spartan", sans-serif;
+  font-size: 1.2rem;
+  color: #f9e97c;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lista-navegacion li:hover {
+  background: rgba(249, 233, 124, 0.1);
+  color: moccasin;
+}
+
+.boton-editar {
+  background: linear-gradient(180deg, #c9b089, #a68b5b);
+  border: none;
+  color: #5c3500;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.boton-editar:hover {
+  background: linear-gradient(180deg, #d4c199, #b89b6b);
+  transform: scale(1.05);
+}
+
+.boton-cerrar-sesion {
+  background: linear-gradient(180deg, #dc3545, #c82333);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.boton-cerrar-sesion:hover {
+  background: linear-gradient(180deg, #e74c3c, #d63031);
+  transform: scale(1.05);
+  color: white;
+  text-decoration: none;
+}
+
+.boton-cerrar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #f9e97c;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.boton-cerrar:hover {
+  color: moccasin;
+}
+
+/* Navegación de usuario */
+nav[aria-label="Usuario"] {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.bienvenida {
+  color: #f9e97c;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 6px #000000;
+  margin: 0;
+}
+
+.bienvenida strong {
+  color: moccasin;
+  font-size: 1.2rem;
+}
+
+.nav {
+  border-radius: 20px;
+  position: fixed;
+  right: -100%;
+  top: 0;
+  width: 300px;
+  height: 50vh;
+  background: linear-gradient(to bottom, #964b00, #5c3500);
+  padding: 2rem;
+  transition: all 0.3s ease;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    width: 50vw;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav {
+    width: 50vw;
+    padding: 1rem;
+  }
+  
+  .nav-list {
+    margin-top: 2rem;
+    gap: 0.8rem;
+  }
+}
+
+.nav.active {
+  right: 0;
+  opacity: 1;
+  visibility: visible;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin-top: 3rem;
+  color: #f9e97c;
+}
+
+.cerrar-nav {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #f9e97c;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.cerrar-nav:hover {
+  color: moccasin;
+}
+
+.nav-list li {
+  font-family: "League Spartan", sans-serif;
+  font-size: 1.5rem;
+  text-decoration: none;
+  color: #f9e97c;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-list li:hover {
+  background: rgba(249, 233, 124, 0.05);
+}
+
+.btn-editar {
+  font-size: 0.8em;
+  color: rgba(249, 233, 124, 0.5);
+  background: none;
+  border: 1px solid rgba(249, 233, 124, 0.3);
+  padding: 0.3em 0.8em;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.btn-editar:hover {
+  color: moccasin;
+  border-color: moccasin;
+  background: rgba(249, 233, 124, 0.1);
+  transform: translateX(-5px);
+}
+
+@media (max-width: 768px) {
+  .btn-editar {
+    font-size: 0.7em;
+    padding: 0.25em 0.6em;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-editar {
+    font-size: 0.6em;
+    padding: 0.2em 0.5em;
+  }
+}
+
+
+
+@media (max-width: 768px) {
+  .nav-list li {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-list li {
+    font-size: 1rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* Botón de configuración */
+.configuracion {
+  background: linear-gradient(to bottom, #964b00, #5c3500);
+  border: 2px solid #f9e97c;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+.configuracion:hover {
+  background: linear-gradient(to bottom, #b85a00, #754200);
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.configuracion:focus {
+  outline: 3px solid #f9e97c;
+  outline-offset: 2px;
+}
+
+.configuracion svg {
+  color: #f9e97c;
+  transition: color 0.3s ease;
+}
+
+.configuracion:hover svg {
+  color: moccasin;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  /* Asegurar espacio para tooltips */
+  padding-bottom: 8rem;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.actions h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #f9e97c;
+  text-shadow: 2px 2px 6px #000000;
+  text-align: center;
+  margin: 0 0 2rem 0;
+}
+
+/* Contenedor para los botones lado a lado */
+.botones-container {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  /* Permitir overflow visible para tooltips */
+  position: relative;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Asegurar que el botón contenga los tooltips */
+  overflow: visible;
+}
+
+button img {
+  width: 280px;
+  max-width: 100%;
+  border-radius: 12px;
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+}
+
+button:hover img {
+  transform: scale(1.05);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+}
+
+button:active img {
+  transform: scale(0.95);
+}
+
+/* Botones específicos de modo de juego */
+.boton-modo-1,
+.boton-modo-2,
+.boton-modo-3 {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: visible;
+}
+
+.boton-modo-1 img,
+.boton-modo-2 img,
+.boton-modo-3 img {
+  width: 280px;
+  max-width: 100%;
+  border-radius: 12px;
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+}
+
+.boton-modo-1:hover img,
+.boton-modo-2:hover img,
+.boton-modo-3:hover img {
+  transform: scale(1.05);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+}
+
+.boton-modo-1:active img,
+.boton-modo-2:active img,
+.boton-modo-3:active img {
+  transform: scale(0.95);
+}
+
+.tooltip {
+  position: fixed;
+  top: auto;
+  left: 50%;
+  bottom: 2rem;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, #964b00, #5c3500);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  text-align: center;
+  max-width: 320px;
+  width: 90vw;
+  white-space: normal;
+  line-height: 1.5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 2px solid #f9e97c;
+  z-index: 1000;
+  /* Evitar overflow */
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Flecha del tooltip - ajustada para posición fixed */
+.tooltip::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-bottom-color: #f9e97c;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: #964b00;
+}
+
+button:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  hgroup {
+    text-align: center;
+  }
+
+  nav[aria-label="Usuario"] {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  main {
+    padding: 2rem 1rem 6rem 1rem;
+  }
+
+  .botones-container {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  button img {
+    width: 240px;
+  }
+
+  #title {
+    font-size: 2rem;
+  }
+
+  #title2 {
+    font-size: 1.5rem;
+  }
+
+  .actions h1 {
+    font-size: 1.5rem;
+  }
+
+  .tooltip {
+    max-width: 280px;
+    font-size: 0.85rem;
+    padding: 0.875rem 1.25rem;
+    bottom: 1rem;
+  }
+
+  .configuracion {
+    width: 40px;
+    height: 40px;
+    top: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .configuracion svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  header {
+    padding: 1rem;
+  }
+
+  main {
+    padding: 1rem 0.5rem 5rem 0.5rem;
+  }
+
+  button img {
+    width: 200px;
+  }
+
+  #title {
+    font-size: 1.8rem;
+  }
+
+  #title2 {
+    font-size: 1.3rem;
+  }
+
+  .actions h1 {
+    font-size: 1.3rem;
+  }
+
+  .tooltip {
+    max-width: 260px;
+    font-size: 0.8rem;
+    padding: 0.75rem 1rem;
+    bottom: 0.5rem;
+  }
+
+  .bienvenida {
+    font-size: 1rem;
+  }
+
+  .bienvenida strong {
+    font-size: 1.1rem;
+  }
+
+  .configuracion {
+    width: 36px;
+    height: 36px;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .configuracion svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .nav-list li {
+    padding: 0.4rem 0.8rem;
+    gap: 0.5rem;
+  }
+}
+
+
+/* Estados de enfoque para accesibilidad */
+.configuracion:focus-visible {
+  outline: 3px solid #f9e97c;
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 3px solid #f9e97c;
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* Asegurar que los tooltips no causen scroll horizontal */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* Modal para iniciar partida */
+.modal-iniciar-juego {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-iniciar-juego.activo {
+  display: block;
+  opacity: 1;
+}
+
+.modal-iniciar-juego .fondo-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-iniciar-juego .contenido-modal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, #fffdf2 0%, #f1e7cf 100%);
+  color: #3a2b1a;
+  width: min(720px, 94vw);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  border: 2px solid #f9e97c;
+}
+
+.modal-iniciar-juego header h2 {
+  margin: 0 0 0.5rem 0;
+  font-family: "Dinopia", sans-serif;
+}
+
+.modal-iniciar-juego label {
+  display: block;
+  margin-top: 0.75rem;
+  font-weight: bold;
+}
+
+.modal-iniciar-juego input[type="text"],
+.modal-iniciar-juego select {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #c9b089;
+  margin-top: 0.25rem;
+}
+
+.nombres-jugadores {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.entrada-jugador {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.entrada-jugador input {
+  flex: 1;
+}
+
+.acciones-modal {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.boton-cancelar {
+  background: transparent;
+  border: 2px solid #c9b089;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.boton-principal {
+  background: linear-gradient(180deg, #964b00, #5c3500);
+  color: #f9e97c;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+
+.contenido-modal h2 {
+  color: #ffd700;
+  font-size: 2rem;
+  margin: 0;
+  text-shadow: 2px 2px 8px #000000;
+  font-weight: 700;
+}
+
+.contenido-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.contenido-modal label {
+  color: #ffd700;
+  font-weight: 600;
+  font-size: 1.2rem;
+  text-shadow: 1px 1px 4px #000000;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.contenido-modal select,
+.contenido-modal input {
+  padding: 1rem;
+  border: 2px solid #daa520;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #654321;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.contenido-modal select:focus,
+.contenido-modal input:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.nombres-jugadores {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(218, 165, 32, 0.3);
+}
+
+.nombres-jugadores .mb-3 {
+  margin-bottom: 0;
+}
+
+.nombres-jugadores .form-label {
+  color: #ffd700;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.nombres-jugadores .form-control {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #daa520;
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: #654321;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.nombres-jugadores .form-control:focus {
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.acciones-modal {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #daa520;
+}
+
+.boton-cancelar {
+  background: transparent;
+  border: 2px solid #daa520;
+  color: #ffd700;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.boton-cancelar:hover {
+  background: rgba(218, 165, 32, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
+}
+
+.boton-principal {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  border: none;
+  color: #654321;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  flex: 2;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.boton-principal:hover {
+  background: linear-gradient(135deg, #ffed4e, #ffd700);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+}
+
+.boton-principal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.boton-principal.cargando {
+  background: linear-gradient(135deg, #ccc, #999);
+  color: #666;
+}
+
+/* Estilos responsivos para el modal */
+@media (max-width: 768px) {
+  .contenido-modal {
+    max-width: 95%;
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .contenido-modal h2 {
+    font-size: 1.6rem;
+  }
+  
+  .contenido-modal label {
+    font-size: 1.1rem;
+  }
+  
+  .contenido-modal select,
+  .contenido-modal input {
+    padding: 0.875rem;
+    font-size: 1rem;
+  }
+  
+  .acciones-modal {
+    flex-direction: column;
+  }
+  
+  .boton-cancelar,
+  .boton-principal {
+    flex: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .contenido-modal {
+    padding: 1rem;
+    max-height: 90vh;
+  }
+  
+  .contenido-modal h2 {
+    font-size: 1.4rem;
+  }
+  
+  .contenido-modal form {
+    gap: 1rem;
+  }
+  
+  .nombres-jugadores {
+    padding: 1rem;
+  }
+  
+  .acciones-modal {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+  }
+}
