@@ -7,8 +7,8 @@
 
 body {
   margin: 0;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto;
   font-family: "League Spartan", sans-serif;
   background: url(../images/index/image.png) center center / cover no-repeat fixed;
   position: relative;
@@ -58,7 +58,8 @@ body {
 .contenedor-principal {
   position: relative;
   z-index: 10;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   padding: 0;
   margin: 0;
 }
@@ -102,8 +103,18 @@ body {
 }
 
 .video-responsivo {
-  border-radius: 15px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
   overflow: hidden;
+  background: #000;
+}
+
+.video-responsivo iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
 
 .video-elemento {
@@ -188,6 +199,68 @@ body {
 .col-video,
 .col-texto {
   padding: 0 15px;
+}
+
+/* Layout override: make main content a stable two-column row
+   Video on the left, text + button on the right, centered vertically */
+.row.contenido-principal {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  height: calc(100vh - 140px);
+  padding: 0 24px;
+}
+
+/* Reset absolute positioning that was breaking alignment */
+.contenedor-video {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: clamp(360px, 55vw, 820px);
+  max-width: 100%;
+  padding: 12px;
+}
+
+.video-responsivo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.video-responsivo iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.seccion-texto {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: clamp(280px, 36vw, 740px);
+  max-width: 100%;
+  padding: 0 12px;
+}
+
+.seccion-boton {
+  position: relative;
+  bottom: auto;
+  right: auto;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.imagen-madera {
+  height: 160px;
+  max-width: 100%;
+  width: auto;
+  object-fit: contain;
 }
 
 /* Bootstrap responsive para tablet/mobile */

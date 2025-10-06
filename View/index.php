@@ -37,8 +37,7 @@
       <section class="col-lg-7 col-md-12 col-video">
         <article class="contenedor-video">
           <div class="video-responsivo ratio-16x9">
-            <video src="/Public/images/index/video.mp4" class="video-elemento" controls playsinline title="Tutorial de Draftosaurios">
-            </video>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/-ZyFqRNkiAU?si=kRTmT97Jn4I1_n1k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
           </div>
         </article>
       </section>
@@ -52,9 +51,6 @@
             quienes quieren repasar antes de jugar!
           </p>
         </article>
-      </section>
-
-      <footer class="col-12 text-center">
         <section class="seccion-boton">
           <nav aria-label="Accion principal">
             <a href="/login" class="boton-madera" role="button" aria-label="Comenzar a jugar">
@@ -62,7 +58,7 @@
             </a>
           </nav>
         </section>
-      </footer>
+      </section>
     </main>
   </div>
 
