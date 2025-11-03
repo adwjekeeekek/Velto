@@ -1,6 +1,3 @@
-// tap en inventario => selecciona especie
-// tap en recinto/slot => coloca en ese slot (o en el primero libre)
-
 const API = '/api';
 const MODO = window.MODO_JUEGO || 'digitalizado';
 const AUTOCREAR = true;
@@ -27,16 +24,34 @@ const imagen = {
   pterodactilo:  '/Public/images/dinos/t6.png'
 };
 
-// --- API pequeña ---
+function apiGet(params) {
+  const url = '/api?' + new URLSearchParams(params);
+  const headers = {};
+  if (window.CSRF) headers['X-CSRF'] = window.CSRF;
+  return fetch(url, { headers }).then(r => r.json());
+}
+
+function apiPost(params) {
+  const body = new URLSearchParams(params);
+  if (window.CSRF) body.set('csrf', window.CSRF);
+  return fetch('/api', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body
+  }).then(r => r.json());
+}
+
 function post(accion, datos) {
-  const body = new URLSearchParams({ accion, ...datos });
-  return fetch(API, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body })
-    .then(r => r.json());
+  return apiPost({ accion, ...datos });
 }
 function get(accion, params) {
-  const qs = new URLSearchParams({ accion, ...params });
-  return fetch(`${API}?${qs}`).then(r => r.json());
+  return apiGet({ accion, ...params });
 }
+
+function toast(msg) {
+  alert(msg);
+}
+
 function asegurarPartida() {
   if (idPartida || !AUTOCREAR) return Promise.resolve(idPartida);
   return post('crear_partida', { modo: MODO }).then(r => {
@@ -48,7 +63,6 @@ function asegurarPartida() {
   });
 }
 
-// --- utilidades cortas ---
 function claveRecinto(el) {
   for (const c of el.classList) if (mapa[c]) return mapa[c];
   return null;
@@ -79,8 +93,11 @@ function limpiar() {
 }
 function cargar() {
   if (!idPartida) return;
-  get('colocaciones', { partida_id: idPartida }).then(r => {
-    if (!r || !r.ok) return;
+  apiGet({accion:'colocaciones', partida_id: idPartida}).then(r => {
+    if (!r || !r.ok) {
+      console.warn('Error cargando colocaciones:', r?.msg);
+      return;
+    }
     limpiar();
     (r.colocaciones || []).forEach(c => {
       const clase = Object.keys(mapa).find(k => mapa[k] === c.recinto);
@@ -88,11 +105,13 @@ function cargar() {
       const slot  = rec && rec.querySelectorAll('.slot')[c.slot];
       if (slot) pintar(slot, String(c.especie || '').trim().toLowerCase());
     });
+  }).catch(error => {
+    console.error('Error cargando colocaciones:', error);
+    toast('No se pudo cargar las colocaciones');
   });
 }
 
-// --- un solo handler para TODO (sirve aunque el drop-up cree elementos luego) ---
-let tocando = false; // evita doble touchend+click en móvil
+let tocando = false;
 document.addEventListener('touchend', (e) => { tocando = true; setTimeout(() => tocando = false, 250); manejarTap(e); });
 document.addEventListener('click', (e) => { if (tocando) return; manejarTap(e); });
 
@@ -113,7 +132,6 @@ function manejarTap(e) {
     return;
   }
 
-  // 2) Colocación en tablero
   const recinto = e.target.closest('.recinto');
   if (!recinto) return;
   if (!especieActual) { alert('Elegí un dinosaurio primero.'); return; }
@@ -136,15 +154,27 @@ function manejarTap(e) {
 
   asegurarPartida().then(() => {
     if (idPartida) {
-      post('colocar', { partida_id: idPartida, recinto: clave, slot: idx, especie: especieActual })
-        .then(r => { if (r && r.ok) cargar(); else alert((r && r.msg) ? r.msg : 'No se pudo colocar.'); });
+      apiPost({accion:'colocar', partida_id: idPartida, recinto: clave, slot: idx, especie: especieActual})
+        .then(r => { 
+          if (r && r.ok) {
+            cargar();
+            if (typeof cargarEstado === 'function') {
+              cargarEstado();
+            }
+          } else {
+            toast(r?.msg || 'No se pudo colocar');
+          }
+        })
+        .catch(error => {
+          console.error('Error colocando:', error);
+          toast('Error de conexión');
+        });
     } else {
-      pintar(slot, especieActual); // solo UI
+      pintar(slot, especieActual);
     }
   });
 }
 
-// inicio
 document.addEventListener('DOMContentLoaded', () => {
   if (idPartida) cargar();
   else if (AUTOCREAR) asegurarPartida().then(cargar);

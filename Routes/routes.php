@@ -70,12 +70,21 @@ function rutas(string $ruta, string $metodo = 'GET'): void
             }
 
 
+        case 'tablero-nuevo':
+        case 'new-board':
+        case 'tablero2':
+            Usuario::requerirLogin();
+            include RUTA_VISTAS . '/tablero-nuevo.php';
+            break;
+
         case 'dashboard':
         case 'panel':
         case 'menu':
             Usuario::requerirLogin();
             include RUTA_VISTAS . '/dashboard.php';
             break;
+
+        
 
         case 'logout':
         case 'cerrar-sesion': {
@@ -91,6 +100,8 @@ function rutas(string $ruta, string $metodo = 'GET'): void
             Usuario::requerirLogin();
             include RUTA_VISTAS . '/tablero.php';
             break;
+
+
 
         case 'seguimiento':
         case 'tracking':

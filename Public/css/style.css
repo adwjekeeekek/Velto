@@ -333,4 +333,52 @@ input:focus {
   display: none;
 }
 
+/* Señales visuales para el juego */
+.turno-flash {
+  transition: background-color .4s ease;
+  background-color: rgba(255,230,150,.8);
+}
+
+.turno-flash.fade {
+  background-color: transparent;
+}
+
+[disabled] {
+  opacity: .5;
+  pointer-events: none;
+}
+
+/* Estilos para botones deshabilitados */
+.boton-dado.deshabilitado {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Animación suave para cambios de estado */
+.recinto {
+  transition: opacity 0.3s ease, pointer-events 0.3s ease;
+}
+
+.recinto.bloqueado {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Indicador de carga */
+.cargando {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.cargando::after {
+  content: " ⏳";
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 

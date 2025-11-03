@@ -51,7 +51,14 @@ class Partida {
         }
 
         $clase = $def['class'];
-        $recintoObj = new $clase();
+        
+        // Para RecintoRio, pasar capacidad explícitamente
+        if ($clase === 'RecintoRio') {
+            $recintoObj = new $clase($capacidad);
+        } else {
+            $recintoObj = new $clase();
+        }
+        
         return $recintoObj->puedeColocar($slotsRecinto, $slot, $especie);
     }
 

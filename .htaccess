@@ -1,0 +1,17 @@
+# Forzar tratamiento PHP y front controller básico
+DirectoryIndex index.php
+AddType application/x-httpd-php .php
+AddDefaultCharset UTF-8
+
+# (Opcional) URLs limpias si ya usas router simple
+RewriteEngine On
+RewriteBase /
+# Deja pasar /api tal cual
+RewriteRule ^api($|/) - [L]
+# Si el archivo/folder existe, servirlo
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule . - [L]
+# Si no existe, enruta a index.php (solo si tu app lo requiere)
+# RewriteRule . index.php [L]
+

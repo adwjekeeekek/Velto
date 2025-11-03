@@ -70,22 +70,8 @@ class AuthController {
             return ['ok' => false, 'msg' => 'Contraseña incorrecta'];
         }
 
-        // Campo activo no existe en el schema actual, comentado
-        // if (!$usuario['activo']) {
-        //     return ['ok' => false, 'msg' => 'Usuario desactivado'];
-        // }
-
         $_SESSION['usuario_id'] = (int)$usuario['id'];
         $_SESSION['usuario_nombre'] = $usuario['nombre'];
-
-        // Campo ultimo_acceso no existe en el schema actual, comentado
-        // try {
-        //     $stmt = $this->db->prepare("UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?");
-        //     $stmt->execute([$usuario['id']]);
-        // } catch (PDOException $e) {
-        //     // No es crítico si falla
-        // }
-
         return ['ok' => true, 'msg' => 'Login exitoso'];
     }
 
@@ -99,9 +85,111 @@ class AuthController {
             return null;
         }
         
-        return [
-            'id' => (int)$_SESSION['usuario_id'],
-            'nombre' => $_SESSION['usuario_nombre'] ?? ''
-        ];
+        try {
+            $stmt = $this->db->prepare("SELECT id, nombre, email FROM usuarios WHERE id = ?");
+            $stmt->execute([(int)$_SESSION['usuario_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$user) return null;
+            
+            return [
+                'id' => (int)$user['id'],
+                'nombre' => $user['nombre'],
+                'email' => $user['email']
+            ];
+        } catch (PDOException $e) {
+            return null;
+        }
+    }
+
+    public function actualizarNombre(string $nuevoNombre): array {
+        if (!isset($_SESSION['usuario_id'])) {
+            return ['ok' => false, 'msg' => 'No autenticado'];
+        }
+
+        if (empty($nuevoNombre)) {
+            return ['ok' => false, 'msg' => 'El nombre no puede estar vacío'];
+        }
+
+        if (strlen($nuevoNombre) < 3) {
+            return ['ok' => false, 'msg' => 'El nombre debe tener al menos 3 caracteres'];
+        }
+
+        if (strlen($nuevoNombre) > 50) {
+            return ['ok' => false, 'msg' => 'El nombre no puede tener más de 50 caracteres'];
+        }
+
+        try {
+            $stmt = $this->db->prepare("UPDATE usuarios SET nombre = ? WHERE id = ?");
+            $stmt->execute([$nuevoNombre, (int)$_SESSION['usuario_id']]);
+            $_SESSION['usuario_nombre'] = $nuevoNombre;
+            return ['ok' => true, 'msg' => 'Nombre actualizado'];
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23000) {
+                return ['ok' => false, 'msg' => 'Ese nombre ya está en uso'];
+            }
+            return ['ok' => false, 'msg' => 'Error al actualizar nombre'];
+        }
+    }
+
+    public function actualizarEmail(string $nuevoEmail): array {
+        if (!isset($_SESSION['usuario_id'])) {
+            return ['ok' => false, 'msg' => 'No autenticado'];
+        }
+
+        if (empty($nuevoEmail)) {
+            return ['ok' => false, 'msg' => 'El email no puede estar vacío'];
+        }
+
+        if (!filter_var($nuevoEmail, FILTER_VALIDATE_EMAIL)) {
+            return ['ok' => false, 'msg' => 'Email inválido'];
+        }
+
+        try {
+            $stmt = $this->db->prepare("UPDATE usuarios SET email = ? WHERE id = ?");
+            $stmt->execute([$nuevoEmail, (int)$_SESSION['usuario_id']]);
+            return ['ok' => true, 'msg' => 'Email actualizado'];
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23000) {
+                return ['ok' => false, 'msg' => 'Ese email ya está en uso'];
+            }
+            return ['ok' => false, 'msg' => 'Error al actualizar email'];
+        }
+    }
+
+    public function actualizarPassword(string $passwordActual, string $passwordNuevo): array {
+        if (!isset($_SESSION['usuario_id'])) {
+            return ['ok' => false, 'msg' => 'No autenticado'];
+        }
+
+        if (empty($passwordActual) || empty($passwordNuevo)) {
+            return ['ok' => false, 'msg' => 'Todos los campos son obligatorios'];
+        }
+
+        if (strlen($passwordNuevo) < 6) {
+            return ['ok' => false, 'msg' => 'La nueva contraseña debe tener al menos 6 caracteres'];
+        }
+
+        try {
+            $stmt = $this->db->prepare("SELECT clave_hash FROM usuarios WHERE id = ?");
+            $stmt->execute([(int)$_SESSION['usuario_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                return ['ok' => false, 'msg' => 'Usuario no encontrado'];
+            }
+
+            if (!password_verify($passwordActual, $user['clave_hash'])) {
+                return ['ok' => false, 'msg' => 'Contraseña actual incorrecta'];
+            }
+
+            $nuevoHash = password_hash($passwordNuevo, PASSWORD_BCRYPT);
+            $stmt = $this->db->prepare("UPDATE usuarios SET clave_hash = ? WHERE id = ?");
+            $stmt->execute([$nuevoHash, (int)$_SESSION['usuario_id']]);
+            
+            return ['ok' => true, 'msg' => 'Contraseña actualizada'];
+        } catch (PDOException $e) {
+            return ['ok' => false, 'msg' => 'Error al actualizar contraseña'];
+        }
     }
 }

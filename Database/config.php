@@ -3,7 +3,7 @@ function getPDO(): PDO {
     static $pdo = null;
     if ($pdo) return $pdo;
 
-    $dsn  = 'mysql:host=localhost;dbname=draftosaurios;charset=utf8mb4';
+    $dsn  = 'mysql:host=localhost;dbname=velto;charset=utf8mb4';
     $user = 'root';
     $pass = '';
 

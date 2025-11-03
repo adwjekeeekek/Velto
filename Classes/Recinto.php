@@ -1,8 +1,6 @@
 <?php
-// Classes/Recinto.php
 require_once __DIR__ . '/Dinosaurio.php';
 
-/* Recinto Semejanza */
 class RecintoSemejanza {
     public string $tipo = 'semejanza';
     public string $area = 'bosque';
@@ -22,7 +20,6 @@ class RecintoSemejanza {
     }
 }
 
-/* Recinto Diferencia */
 class RecintoDiferencia {
     public string $tipo = 'diferencia';
     public string $area = 'llanura';
@@ -37,7 +34,6 @@ class RecintoDiferencia {
     }
 }
 
-/* Recinto Amor */
 class RecintoAmor {
     public string $tipo = 'amor';
     public string $area = 'llanura';
@@ -49,7 +45,6 @@ class RecintoAmor {
     }
 }
 
-/* Recinto Trío */
 class RecintoTrio {
     public string $tipo = 'trio';
     public string $area = 'bosque';
@@ -61,7 +56,6 @@ class RecintoTrio {
     }
 }
 
-/* Recinto Rey */
 class RecintoRey {
     public string $tipo = 'rey';
     public string $area = 'bosque';
@@ -73,7 +67,6 @@ class RecintoRey {
     }
 }
 
-/* Recinto Solitaria */
 class RecintoSolitaria {
     public string $tipo = 'solitaria';
     public string $area = 'llanura';
@@ -85,7 +78,6 @@ class RecintoSolitaria {
     }
 }
 
-/* Recinto Río */
 class RecintoRio {
     public string $tipo = 'rio';
     public ?string $area = null;

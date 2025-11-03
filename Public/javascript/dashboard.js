@@ -9,32 +9,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnConfig = document.getElementById('botonConfiguracion');
   const menuNav = document.getElementById('menuNavegacion');
   const btnCerrarNav = document.getElementById('botonCerrar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-  // Función para alternar el menú de navegación
   function toggleNav() {
-    menuNav.classList.toggle('activo');
+    menuNav.classList.toggle('active');
+    sidebarOverlay.classList.toggle('active');
+    document.body.style.overflow = menuNav.classList.contains('active') ? 'hidden' : '';
   }
 
-  // Función para cerrar el menú de navegación
   function cerrarNav() {
-    menuNav.classList.remove('activo');
+    menuNav.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+    document.body.style.overflow = '';
   }
 
-  // Eventos para el menú de navegación
   if (btnConfig) btnConfig.addEventListener('click', toggleNav);
   if (btnCerrarNav) btnCerrarNav.addEventListener('click', cerrarNav);
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', cerrarNav);
 
-  // Cerrar el menú cuando se hace clic fuera de él
-  document.addEventListener('click', (e) => {
-    if (menuNav && btnConfig && !menuNav.contains(e.target) && !btnConfig.contains(e.target)) {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuNav.classList.contains('active')) {
       cerrarNav();
     }
   });
 
-  // Código existente para el modal
   function abrirModal(modo) {
     if (selectModo) {
-      // Mapear modos correctamente
       const modoMap = {
         'digitalizado': 'digitalizado',
         'seguimiento': 'seguimiento'
@@ -54,10 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Función para crear partida
   async function crearPartida(modo, jugadores = null) {
     try {
-      // Mostrar indicador de carga
       const botonSubmit = document.querySelector('#formularioIniciarPartida button[type="submit"]');
       if (botonSubmit) {
         botonSubmit.disabled = true;
@@ -65,22 +63,23 @@ document.addEventListener('DOMContentLoaded', () => {
         botonSubmit.classList.add('cargando');
       }
 
-      // Preparar datos
       const datos = {
         accion: 'crear_partida',
         modo: modo
       };
 
-      // Si se proporcionan jugadores, incluirlos
       if (jugadores && Array.isArray(jugadores)) {
         datos.jugadores = JSON.stringify(jugadores);
       }
 
-      // Crear FormData
       const formData = new URLSearchParams();
       Object.keys(datos).forEach(key => {
         formData.append(key, datos[key]);
       });
+
+      if (window.CSRF) {
+        formData.append('csrf', window.CSRF);
+      }
 
       const response = await fetch('/api', {
         method: 'POST',
@@ -91,23 +90,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (data.ok) {
-        // Cerrar modal
         cerrarModal();
-        // Redirigir al tablero
-        window.location.href = `/tablero?partida_id=${data.partida_id}&modo=${modo}`;
+        window.location.href = `/tablero-nuevo?partida_id=${data.partida_id}&modo=${modo}`;
       } else {
-        alert('Error creando partida: ' + (data.msg || 'Error desconocido'));
-        // Restaurar botón
+        const errorMsg = data.msg || 'Error desconocido';
+        alert('Error creando partida: ' + errorMsg);
         if (botonSubmit) {
           botonSubmit.disabled = false;
           botonSubmit.textContent = 'Crear Partida';
-          botonSubmit.classList.remove('cargando');
-        }
+        botonSubmit.classList.remove('cargando');
+      }
       }
     } catch (error) {
       console.error('Error creando partida:', error);
       alert('Error de conexión');
-      // Restaurar botón
       const botonSubmit = document.querySelector('#formularioIniciarPartida button[type="submit"]');
       if (botonSubmit) {
         botonSubmit.disabled = false;
@@ -117,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Manejar envío del formulario del modal
   const formularioIniciarPartida = document.getElementById('formularioIniciarPartida');
   if (formularioIniciarPartida) {
     formularioIniciarPartida.addEventListener('submit', async (e) => {
@@ -126,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const modo = selectModo.value;
       const cantidadJugadores = document.getElementById('cantidadJugadores').value;
       
-      // Recopilar nombres de jugadores
       const jugadores = [];
       for (let i = 1; i <= cantidadJugadores; i++) {
         const inputJugador = document.getElementById(`jugador${i}`);
@@ -138,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       
-      // Validar que haya al menos 2 jugadores
       if (jugadores.length < 2) {
         alert('Se necesitan al menos 2 jugadores para comenzar el juego');
         return;
@@ -148,27 +141,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Abrir modal para configurar partida
-  if (btnIniciarDigitalizado) {
-    btnIniciarDigitalizado.addEventListener('click', (e) => { 
+  function setupGameModeListeners(element, modo) {
+    if (!element) return;
+    
+    element.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-play')) return;
       e.preventDefault();
-      abrirModal('digitalizado');
+      abrirModal(modo);
     });
+    
+    const btnPlay = element.querySelector('.btn-play');
+    if (btnPlay) {
+      btnPlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        abrirModal(modo);
+      });
+    }
   }
   
-  if (btnIniciarSeguimiento) {
-    btnIniciarSeguimiento.addEventListener('click', (e) => { 
-      e.preventDefault(); 
-      abrirModal('seguimiento');
-    });
-  }
+  setupGameModeListeners(btnIniciarDigitalizado, 'digitalizado');
+  setupGameModeListeners(btnIniciarSeguimiento, 'seguimiento');
   
   if (overlayModal) overlayModal.addEventListener('click', cerrarModal);
 
   const btnCancelarInicio = document.getElementById('botonCancelar');
   if (btnCancelarInicio) btnCancelarInicio.addEventListener('click', cerrarModal);
 
-  // Manejar cambio en cantidad de jugadores
   const cantidadJugadoresSelect = document.getElementById('cantidadJugadores');
   if (cantidadJugadoresSelect) {
     cantidadJugadoresSelect.addEventListener('change', (e) => {
@@ -177,15 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Función para actualizar campos de jugadores
   function actualizarCamposJugadores(cantidad) {
     const contenedor = document.getElementById('contenedorNombresJugadores');
     if (!contenedor) return;
 
-    // Limpiar contenedor
     contenedor.innerHTML = '';
 
-    // Crear campos para cada jugador
     for (let i = 1; i <= cantidad; i++) {
       const div = document.createElement('div');
       div.className = 'mb-3';
@@ -202,10 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
       input.name = `jugador${i}`;
       input.required = true;
       
-      // Valor por defecto para el primer jugador
       if (i === 1) {
-        // Obtener nombre del usuario actual desde el HTML
-        const nombreUsuario = document.querySelector('.mensaje-bienvenida strong')?.textContent || 'Jugador 1';
+        const nombreUsuario = document.querySelector('.welcome-text strong')?.textContent 
+          || document.querySelector('.sidebar-username')?.textContent 
+          || 'Jugador 1';
         input.value = nombreUsuario;
       } else {
         input.value = `Jugador ${i}`; 
@@ -217,6 +213,236 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Inicializar con 2 jugadores por defecto
   actualizarCamposJugadores(2);
+
+  const editButtons = document.querySelectorAll('.btn-edit');
+  const modales = {
+    nombre: document.getElementById('modalEditarNombre'),
+    email: document.getElementById('modalEditarEmail'),
+    password: document.getElementById('modalEditarPassword')
+  };
+
+  editButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tipo = btn.dataset.edit;
+      const modal = modales[tipo];
+      if (modal) {
+        modal.classList.add('activo');
+        modal.setAttribute('aria-hidden', 'false');
+        
+        if (tipo === 'nombre') {
+          const valorActual = document.querySelector('.sidebar-username').textContent;
+          document.getElementById('inputNuevoNombre').value = valorActual;
+        } else if (tipo === 'email') {
+          const valorActual = document.querySelector('.sidebar-email').textContent;
+          document.getElementById('inputNuevoEmail').value = valorActual;
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-cancelar-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const modal = btn.closest('.modal-editar');
+      if (modal) {
+        modal.classList.remove('activo');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.querySelector('form').reset();
+      }
+    });
+  });
+
+  document.querySelectorAll('.modal-editar .fondo-modal').forEach(fondo => {
+    fondo.addEventListener('click', () => {
+      const modal = fondo.closest('.modal-editar');
+      if (modal) {
+        modal.classList.remove('activo');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.querySelector('form').reset();
+      }
+    });
+  });
+
+  const formNombre = document.getElementById('formEditarNombre');
+  if (formNombre) {
+    formNombre.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('inputNuevoNombre').value.trim();
+      
+      if (!nombre || nombre.length < 3) {
+        mostrarMensaje('El nombre debe tener al menos 3 caracteres', 'error');
+        return;
+      }
+
+      const btn = formNombre.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        const formData = new URLSearchParams();
+        formData.append('accion', 'actualizar_nombre');
+        formData.append('nombre', nombre);
+
+        const res = await fetch('/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          document.querySelector('.sidebar-username').textContent = nombre;
+          document.querySelectorAll('.nav-label-value')[0].textContent = nombre;
+          document.querySelector('.welcome-text strong').textContent = nombre;
+          modales.nombre.classList.remove('activo');
+          formNombre.reset();
+          mostrarMensaje('Nombre actualizado correctamente', 'exito');
+        } else {
+          mostrarMensaje(data.msg || 'Error al actualizar', 'error');
+        }
+      } catch (error) {
+        mostrarMensaje('Error de conexión', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar';
+      }
+    });
+  }
+
+  const formEmail = document.getElementById('formEditarEmail');
+  if (formEmail) {
+    formEmail.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('inputNuevoEmail').value.trim();
+      
+      if (!email || !email.includes('@')) {
+        mostrarMensaje('Email inválido', 'error');
+        return;
+      }
+
+      const btn = formEmail.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        const formData = new URLSearchParams();
+        formData.append('accion', 'actualizar_email');
+        formData.append('email', email);
+
+        const res = await fetch('/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          document.querySelector('.sidebar-email').textContent = email;
+          document.querySelectorAll('.nav-label-value')[1].textContent = email;
+          modales.email.classList.remove('activo');
+          formEmail.reset();
+          mostrarMensaje('Email actualizado correctamente', 'exito');
+        } else {
+          mostrarMensaje(data.msg || 'Error al actualizar', 'error');
+        }
+      } catch (error) {
+        mostrarMensaje('Error de conexión', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar';
+      }
+    });
+  }
+
+  const formPassword = document.getElementById('formEditarPassword');
+  if (formPassword) {
+    formPassword.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const actual = document.getElementById('inputPasswordActual').value;
+      const nuevo = document.getElementById('inputPasswordNuevo').value;
+      const confirmar = document.getElementById('inputPasswordConfirmar').value;
+
+      if (!actual || !nuevo || !confirmar) {
+        mostrarMensaje('Todos los campos son obligatorios', 'error');
+        return;
+      }
+
+      if (nuevo.length < 6) {
+        mostrarMensaje('La nueva contraseña debe tener al menos 6 caracteres', 'error');
+        return;
+      }
+
+      if (nuevo !== confirmar) {
+        mostrarMensaje('Las contraseñas no coinciden', 'error');
+        return;
+      }
+
+      const btn = formPassword.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Cambiando...';
+
+      try {
+        const formData = new URLSearchParams();
+        formData.append('accion', 'actualizar_password');
+        formData.append('password_actual', actual);
+        formData.append('password_nuevo', nuevo);
+
+        const res = await fetch('/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          modales.password.classList.remove('activo');
+          formPassword.reset();
+          mostrarMensaje('Contraseña actualizada correctamente', 'exito');
+        } else {
+          mostrarMensaje(data.msg || 'Error al actualizar', 'error');
+        }
+      } catch (error) {
+        mostrarMensaje('Error de conexión', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Cambiar';
+      }
+    });
+  }
+
+  function mostrarMensaje(texto, tipo) {
+    const div = document.createElement('div');
+    div.className = `mensaje-${tipo}`;
+    div.textContent = texto;
+    div.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      z-index: 9999;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    `;
+    
+    if (tipo === 'error') {
+      div.style.background = '#f44336';
+      div.style.color = 'white';
+    } else {
+      div.style.background = '#4caf50';
+      div.style.color = 'white';
+    }
+    
+    document.body.appendChild(div);
+    
+    setTimeout(() => {
+      div.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => div.remove(), 300);
+    }, 3000);
+  }
 });

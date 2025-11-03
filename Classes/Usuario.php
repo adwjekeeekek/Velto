@@ -1,5 +1,6 @@
 <?php
-// Classes/Usuario.php
+require_once __DIR__ . '/../Database/config.php';
+
 class Usuario {
     public static function estaLogueado(): bool {
         if (session_status() === PHP_SESSION_NONE) session_start();
@@ -15,9 +16,18 @@ class Usuario {
 
     public static function actual(): ?array {
         if (!self::estaLogueado()) return null;
+        
+        $pdo = getPDO();
+        $stmt = $pdo->prepare("SELECT id, nombre, email FROM usuarios WHERE id = ?");
+        $stmt->execute([(int)$_SESSION['usuario_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) return null;
+        
         return [
-            'id' => (int)$_SESSION['usuario_id'],
-            'nombre' => $_SESSION['usuario_nombre'] ?? ''
+            'id' => (int)$user['id'],
+            'nombre' => $user['nombre'],
+            'email' => $user['email']
         ];
     }
 }

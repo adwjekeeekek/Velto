@@ -1,10 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../Classes/Partida.php';
+require_once __DIR__ . '/../Classes/BolsaDinosaurios.php';
+require_once __DIR__ . '/../Classes/GestorManos.php';
 
 class GameController
 {
     private PDO $db;
+    private GestorManos $gestorManos;
     
     private array $planSeguimiento = [
         1 => ['recinto' => 'bosque_semejanza', 'especie' => null],
@@ -25,16 +28,27 @@ class GameController
     {
         $this->db = $pdo;
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->gestorManos = new GestorManos($pdo);
     }
 
 
     private function jugadorIdDeSesion(int $partidaId): ?int {
         $usuarioId = $_SESSION['usuario_id'] ?? null;
         if (!$usuarioId) return null;
-        $st = $this->db->prepare("SELECT usuario_id FROM jug_partida WHERE partida_id=? AND usuario_id=? LIMIT 1");
-        $st->execute([$partidaId, $usuarioId]);
-        $row = $st->fetch(PDO::FETCH_ASSOC);
-        return $row ? (int)$row['usuario_id'] : null;
+        
+        $st = $this->db->prepare("SELECT turno_id FROM partidas WHERE id=? LIMIT 1");
+        $st->execute([$partidaId]);
+        $turnoId = $st->fetchColumn();
+        
+        if ($turnoId) {
+            $verify = $this->db->prepare("SELECT id FROM jugadores_partida WHERE id=? AND partida_id=? LIMIT 1");
+            $verify->execute([$turnoId, $partidaId]);
+            if ($verify->fetch()) {
+                return (int)$turnoId;
+            }
+        }
+        
+        return null;
     }
 
     private function obtenerPasoActual(int $partidaId): int {
@@ -46,7 +60,12 @@ class GameController
     private function buscarPartida(int $id): ?array
     {
         if ($id <= 0) return null;
-        $st = $this->db->prepare("SELECT * FROM partidas WHERE id=? LIMIT 1");
+        $st = $this->db->prepare("
+            SELECT id, usuario_id, modo, jugada, estado, creado, dado, turno_id, ronda, 
+                   bolsa, ronda_actual, turno_actual, jugadores_colocaron 
+            FROM partidas 
+            WHERE id=? LIMIT 1
+        ");
         $st->execute([$id]);
         $row = $st->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
@@ -54,16 +73,17 @@ class GameController
 
     private function jugadorActualId(int $partidaId): ?int
     {
-        $st = $this->db->prepare("SELECT turno_id FROM partidas WHERE id=?");
+        $st = $this->db->prepare("SELECT turno_id FROM partidas WHERE id = ? LIMIT 1");
         $st->execute([$partidaId]);
-        return $st->fetchColumn() ?: null;
+        $turnoId = $st->fetchColumn();
+        return $turnoId ? (int)$turnoId : null;
     }
 
     private function siguienteJugadorId(int $partidaId): ?int
     {
         $st = $this->db->prepare("
-            SELECT jp.usuario_id 
-            FROM jug_partida jp 
+            SELECT jp.id 
+            FROM jugadores_partida jp 
             WHERE jp.partida_id = ? 
             ORDER BY jp.orden ASC
         ");
@@ -100,23 +120,34 @@ class GameController
         $p = $this->buscarPartida($partidaId);
         if (!$p) return;
 
-        $primerJugador = $this->db->prepare("SELECT usuario_id FROM jug_partida WHERE partida_id = ? ORDER BY orden ASC LIMIT 1");
+        $primerJugador = $this->db->prepare("SELECT id FROM jugadores_partida WHERE partida_id = ? ORDER BY orden ASC LIMIT 1");
         $primerJugador->execute([$partidaId]);
         $primerJugadorId = $primerJugador->fetchColumn();
 
-        $nuevaRonda = $p['ronda'];
-        if ($siguienteJugador == $primerJugadorId && $p['turno_id'] != $primerJugadorId) {
+        $nuevaRonda = $p['ronda'] ?? 1;
+        $nuevaJugada = $p['jugada'] ?? 1;
+        
+        if ($siguienteJugador == $primerJugadorId) {
             $nuevaRonda++;
+            $nuevaJugada = 1;
+        } else {
+            $nuevaJugada++;
         }
 
-        $this->db->prepare("UPDATE partidas SET turno_id = ?, ronda = ? WHERE id = ?")
-                 ->execute([$siguienteJugador, $nuevaRonda, $partidaId]);
+        $this->db->prepare("UPDATE partidas SET turno_id = ?, ronda = ?, jugada = ? WHERE id = ?")
+                 ->execute([$siguienteJugador, $nuevaRonda, $nuevaJugada, $partidaId]);
     }
 
-    private function obtenerEstadoTablero(int $partidaId): array
+    private function obtenerEstadoTablero(int $partidaId, ?int $jugadorId = null): array
     {
-        $st = $this->db->prepare("SELECT recinto, slot, especie FROM colocaciones WHERE partida_id = ?");
-        $st->execute([$partidaId]);
+        if ($jugadorId !== null) {
+            $st = $this->db->prepare("SELECT recinto, slot, especie FROM colocaciones WHERE partida_id = ? AND jugador_id = ?");
+            $st->execute([$partidaId, $jugadorId]);
+        } else {
+            $st = $this->db->prepare("SELECT recinto, slot, especie FROM colocaciones WHERE partida_id = ?");
+            $st->execute([$partidaId]);
+        }
+        
         $colocaciones = $st->fetchAll(PDO::FETCH_ASSOC);
         
         require_once __DIR__ . '/../Classes/Dinosaurio.php';
@@ -138,20 +169,143 @@ class GameController
 
     private function actualizarPuntuacionJugador(int $partidaId, int $jugadorId): void
     {
-        $st = $this->db->prepare("SELECT recinto, especie FROM colocaciones WHERE partida_id = ?");
-        $st->execute([$partidaId]);
-        $colocaciones = $st->fetchAll(PDO::FETCH_ASSOC);
-        
-        $partida = new Partida($partidaId, 'digitalizado');
-        $puntuacion = $partida->puntuar($colocaciones);
-        
-        $st = $this->db->prepare("UPDATE jug_partida SET puntos = ? WHERE partida_id = ? AND usuario_id = ?");
-        $st->execute([$puntuacion['total'], $partidaId, $jugadorId]);
+        try {
+            $st = $this->db->prepare("SELECT recinto, especie FROM colocaciones WHERE partida_id = ? AND jugador_id = ?");
+            $st->execute([$partidaId, $jugadorId]);
+            $colocaciones = $st->fetchAll(PDO::FETCH_ASSOC);
+            
+            $partida = new Partida($partidaId, 'digitalizado');
+            $puntuacion = $partida->puntuar($colocaciones);
+            
+            $st = $this->db->prepare("UPDATE jugadores_partida SET puntos = ? WHERE id = ?");
+            $st->execute([$puntuacion['total'], $jugadorId]);
+        } catch (Exception $e) {
+        }
     }
 
+    private function obtenerOrdenJugadores(int $partidaId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT id 
+            FROM jugadores_partida 
+            WHERE partida_id = ? 
+            ORDER BY orden ASC
+        ");
+        $stmt->execute([$partidaId]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    private function marcarJugadorColoco(int $partidaId, int $jugadorId): void
+    {
+        $partida = $this->buscarPartida($partidaId);
+        $colocaron = json_decode($partida['jugadores_colocaron'] ?? '[]', true);
+        if (!is_array($colocaron)) $colocaron = [];
+        
+        if (!in_array($jugadorId, $colocaron)) {
+            $colocaron[] = $jugadorId;
+        }
+        
+        $stmt = $this->db->prepare("UPDATE partidas SET jugadores_colocaron = ? WHERE id = ?");
+        $stmt->execute([json_encode($colocaron), $partidaId]);
+    }
+
+    private function todosColocaron(int $partidaId): bool
+    {
+        $partida = $this->buscarPartida($partidaId);
+        $colocaron = json_decode($partida['jugadores_colocaron'] ?? '[]', true);
+        if (!is_array($colocaron)) $colocaron = [];
+        
+        $ordenJugadores = $this->obtenerOrdenJugadores($partidaId);
+        return count($colocaron) === count($ordenJugadores);
+    }
+
+    private function limpiarMarcadoresTurno(int $partidaId): void
+    {
+        $stmt = $this->db->prepare("UPDATE partidas SET jugadores_colocaron = '[]' WHERE id = ?");
+        $stmt->execute([$partidaId]);
+    }
+
+    private function avanzarTurnoYRonda(int $partidaId): void
+    {
+        $partida = $this->buscarPartida($partidaId);
+        $rondaActual = (int)($partida['ronda_actual'] ?? 1);
+        $turnoActual = (int)($partida['turno_actual'] ?? 1);
+        
+        $ordenJugadores = $this->obtenerOrdenJugadores($partidaId);
+        $numJugadores = count($ordenJugadores);
+        
+        $turnosPorRonda = ($numJugadores === 2) ? 3 : 6;
+        $rondasTotales = ($numJugadores === 2) ? 4 : 2;
+        
+        if ($numJugadores === 2) {
+            $bolsa = BolsaDinosaurios::deserializar($partida['bolsa']);
+            
+            foreach ($ordenJugadores as $jugadorId) {
+                $mano = $this->gestorManos->obtenerMano($partidaId, $jugadorId);
+                
+                if (count($mano) > 0) {
+                    $dinoADevolver = $mano[0];
+                    $this->gestorManos->quitarDinosaurio($partidaId, $jugadorId, $dinoADevolver);
+                    $bolsa[] = $dinoADevolver;
+                }
+            }
+            
+            $stmt = $this->db->prepare("UPDATE partidas SET bolsa = ? WHERE id = ?");
+            $stmt->execute([BolsaDinosaurios::serializar($bolsa), $partidaId]);
+        }
+        
+        if ($numJugadores > 1) {
+            $this->gestorManos->rotarManos($partidaId, $ordenJugadores);
+        }
+        
+        $this->limpiarMarcadoresTurno($partidaId);
+        
+        if ($turnoActual >= $turnosPorRonda) {
+            if ($rondaActual >= $rondasTotales) {
+                $stmt = $this->db->prepare("
+                    UPDATE partidas 
+                    SET estado = 'fin', ronda_actual = ?, turno_actual = ? 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$rondasTotales, $turnosPorRonda, $partidaId]);
+            } else {
+                $nuevaRonda = $rondaActual + 1;
+                $this->iniciarNuevaRonda($partidaId, $nuevaRonda);
+            }
+        } else {
+            $nuevoTurno = $turnoActual + 1;
+            $stmt = $this->db->prepare("UPDATE partidas SET turno_actual = ? WHERE id = ?");
+            $stmt->execute([$nuevoTurno, $partidaId]);
+        }
+    }
+
+    private function iniciarNuevaRonda(int $partidaId, int $numeroRonda): void
+    {
+        $partida = $this->buscarPartida($partidaId);
+        $bolsa = BolsaDinosaurios::deserializar($partida['bolsa']);
+        $ordenJugadores = $this->obtenerOrdenJugadores($partidaId);
+        
+        try {
+            $this->gestorManos->repartirATodos($partidaId, $ordenJugadores, $bolsa, 6);
+            
+            $stmt = $this->db->prepare("
+                UPDATE partidas 
+                SET bolsa = ?, ronda_actual = ?, turno_actual = 1, jugadores_colocaron = '[]'
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                BolsaDinosaurios::serializar($bolsa),
+                $numeroRonda,
+                $partidaId
+            ]);
+        } catch (RuntimeException $e) {
+            throw new RuntimeException("Error iniciando ronda $numeroRonda: " . $e->getMessage());
+        }
+    }
 
     public function crearPartida(string $modo, ?array $jugadores = null): array
     {
+        try {
         $modosValidos = ['seguimiento', 'digitalizado'];
         $modo = in_array($modo, $modosValidos) ? $modo : 'seguimiento';
         
@@ -161,22 +315,23 @@ class GameController
 
         $this->db->beginTransaction();
 
-        // En modo seguimiento, el estado inicial es 'colocar' (no se usa dado)
         $estadoInicial = ($modo === 'seguimiento') ? 'colocar' : 'dado';
-        $stmt = $this->db->prepare("INSERT INTO partidas (usuario_id, modo, ronda, estado, dado, turno_id) VALUES (?, ?, 1, ?, NULL, NULL)");
+        $stmt = $this->db->prepare("INSERT INTO partidas (usuario_id, modo, estado, dado) VALUES (?, ?, ?, NULL)");
         $stmt->execute([$_SESSION['usuario_id'] ?? 1, $modo, $estadoInicial]);
         $partidaId = (int)$this->db->lastInsertId();
 
-        $ins = $this->db->prepare("INSERT INTO jug_partida (partida_id, usuario_id, nombre, orden, puntos) VALUES (?, ?, ?, ?, 0)");
+        $ins = $this->db->prepare("INSERT INTO jugadores_partida (partida_id, usuario_id, nombre, orden, puntos) VALUES (?, ?, ?, ?, 0)");
         
-        foreach ($jugadores as $j) {
-            $uid = isset($j['usuario_id']) ? (int)$j['usuario_id'] : ($_SESSION['usuario_id'] ?? 1);
-            $nombre = $j['nombre'] ?? 'Jugador';
-            $orden = $j['id'] ?? 1;
-            $ins->execute([$partidaId, $uid, $nombre, $orden]);
+        $usuarioCreador = $_SESSION['usuario_id'] ?? 1;
+        
+        foreach ($jugadores as $index => $j) {
+            $nombre = $j['nombre'] ?? 'Jugador ' . ($index + 1);
+            $orden = $j['id'] ?? ($index + 1);
+            
+            $ins->execute([$partidaId, $usuarioCreador, $nombre, $orden]);
         }
         
-        $primerJugador = $this->db->prepare("SELECT usuario_id FROM jug_partida WHERE partida_id = ? ORDER BY orden ASC LIMIT 1");
+        $primerJugador = $this->db->prepare("SELECT id FROM jugadores_partida WHERE partida_id = ? ORDER BY orden ASC LIMIT 1");
         $primerJugador->execute([$partidaId]);
         $primerJugadorId = $primerJugador->fetchColumn();
         
@@ -185,8 +340,35 @@ class GameController
                      ->execute([$primerJugadorId, $partidaId]);
         }
         
+        $numJugadores = count($jugadores);
+        $bolsa = BolsaDinosaurios::construir($numJugadores);
+        $ordenJugadores = $this->obtenerOrdenJugadores($partidaId);
+        
+        $this->gestorManos->repartirATodos($partidaId, $ordenJugadores, $bolsa, 6);
+        
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE partidas 
+                SET bolsa = ?, ronda_actual = 1, turno_actual = 1, jugadores_colocaron = '[]'
+                WHERE id = ?
+            ");
+            $stmt->execute([BolsaDinosaurios::serializar($bolsa), $partidaId]);
+        } catch (PDOException $e) {
+            if ($e->getCode() == '42S22') {
+                throw new RuntimeException("Schema de BD desactualizado. Ejecuta: Database/update_schema_bolsa.sql");
+            }
+            throw $e;
+        }
+        
         $this->db->commit();
         return ['ok' => true, 'partida_id' => $partidaId];
+        
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return ['ok' => false, 'msg' => 'Error al crear partida: ' . $e->getMessage()];
+        }
     }
 
     public function lanzarDado(int $partidaId): array
@@ -194,9 +376,9 @@ class GameController
         $p = $this->buscarPartida($partidaId);
         if (!$p) return ['ok' => false, 'msg' => 'Partida no encontrada'];
 
-        $jugadorId = $this->jugadorIdDeSesion($partidaId);
-        if (!$jugadorId) {
-            return ['ok' => false, 'msg' => 'No estás en esta partida'];
+        $usuarioId = $_SESSION['usuario_id'] ?? null;
+        if (!$usuarioId) {
+            return ['ok' => false, 'msg' => 'No estás autenticado'];
         }
 
         if ($p['modo'] !== 'digitalizado') {
@@ -205,10 +387,6 @@ class GameController
         
         if ($p['estado'] !== 'dado') {
             return ['ok' => false, 'msg' => 'No es momento de tirar el dado'];
-        }
-        
-        if ($p['turno_id'] != $jugadorId) {
-            return ['ok' => false, 'msg' => 'No es tu turno'];
         }
 
         $caras = ['bosque', 'llanura', 'baños', 'cafeteria', 'vacio', 'sin_trex'];
@@ -222,29 +400,58 @@ class GameController
 
     public function colocar(int $partidaId, string $recinto, int $slot, string $especie): array
     {
+        $this->db->beginTransaction();
+        
+        try {
         $p = $this->buscarPartida($partidaId);
-        if (!$p) return ['ok' => false, 'msg' => 'Partida no encontrada'];
+            if (!$p) {
+                $this->db->rollBack();
+                return ['ok' => false, 'msg' => 'Partida no encontrada'];
+            }
 
-        $jugadorId = $_SESSION['usuario_id'] ?? null;
-        if (!$jugadorId) return ['ok' => false, 'msg' => 'No hay sesión activa'];
+            $jugadorActualId = $p['turno_id'] ?? null;
+            if (!$jugadorActualId) {
+                $this->db->rollBack();
+                return ['ok' => false, 'msg' => 'No hay turno definido'];
+            }
 
-        if ($p['turno_id'] != $jugadorId) {
-            return ['ok' => false, 'msg' => 'No es tu turno'];
+            $checkPartida = $this->db->prepare("SELECT jugadores_colocaron FROM partidas WHERE id = ? FOR UPDATE");
+            $checkPartida->execute([$partidaId]);
+            $jugadoresColocaronStr = $checkPartida->fetchColumn();
+            
+            $colocaron = json_decode($jugadoresColocaronStr ?? '[]', true);
+            if (!is_array($colocaron)) $colocaron = [];
+            
+            if (in_array($jugadorActualId, $colocaron)) {
+                $this->db->rollBack();
+                return ['ok' => false, 'msg' => 'Ya colocaste en este turno. Espera a que todos coloquen.'];
         }
 
         if ($p['modo'] === 'digitalizado' && $p['estado'] !== 'colocar') {
+                $this->db->rollBack();
             return ['ok' => false, 'msg' => 'Primero tira el dado'];
         }
         
         if ($p['modo'] === 'seguimiento' && $p['estado'] !== 'colocar') {
+                $this->db->rollBack();
             return ['ok' => false, 'msg' => 'No es momento de colocar'];
         }
 
-        $recinto = trim($recinto);
-        $especie = strtolower(trim($especie));
+        $recinto = is_array($recinto) ? '' : trim((string)$recinto);
+        $especie = is_array($especie) ? '' : strtolower(trim((string)$especie));
         
         require_once __DIR__ . '/../Classes/Dinosaurio.php';
         $especie = Dinosaurio::normalizar($especie);
+            
+            try {
+                if (!$this->gestorManos->tieneDinosaurio($partidaId, $jugadorActualId, $especie)) {
+                    $this->db->rollBack();
+                    return ['ok' => false, 'msg' => "No tienes '$especie' en tu mano"];
+                }
+            } catch (Exception $e) {
+                $this->db->rollBack();
+                return ['ok' => false, 'msg' => 'Sistema de bolsa no activo. Actualiza la BD primero.'];
+            }
 
         $limites = [
             'bosque_semejanza' => 4,
@@ -257,76 +464,98 @@ class GameController
         ];
 
         $limite = $limites[$recinto] ?? 0;
+            if ($limite === 0) {
+                $this->db->rollBack();
+                return ['ok' => false, 'msg' => "Recinto no válido"];
+            }
         if ($slot < 0 || $slot >= $limite) {
+                $this->db->rollBack();
             return ['ok' => false, 'msg' => 'Slot fuera de rango'];
         }
 
-        $st = $this->db->prepare("SELECT 1 FROM colocaciones WHERE partida_id=? AND recinto=? AND slot=?");
-        $st->execute([$partidaId, $recinto, $slot]);
+            $st = $this->db->prepare("SELECT 1 FROM colocaciones WHERE partida_id=? AND jugador_id=? AND recinto=? AND slot=?");
+            $st->execute([$partidaId, $jugadorActualId, $recinto, $slot]);
         if ($st->fetchColumn()) {
-            return ['ok' => false, 'msg' => 'Slot ocupado'];
-        }
+                $this->db->rollBack();
+                return ['ok' => false, 'msg' => 'Ya colocaste en este slot'];
+            }
 
-        if ($p['modo'] === 'seguimiento') {
-            $paso = $this->obtenerPasoActual($partidaId);
-            $planPaso = $this->planSeguimiento[$paso] ?? null;
-            
-            if (!$planPaso) {
-                return ['ok' => false, 'msg' => 'Tutorial completado'];
-            }
-            
-            if ($recinto !== $planPaso['recinto']) {
-                return ['ok' => false, 'msg' => "Debes colocar en: {$planPaso['recinto']}"];
-            }
-            
-            if ($planPaso['especie'] && $especie !== $planPaso['especie']) {
-                return ['ok' => false, 'msg' => "Debes colocar: {$planPaso['especie']}"];
-            }
-        }
-
-        // Validar reglas usando Partida
-        $partida = new Partida($partidaId, $p['modo']);
-        $tablero = $this->obtenerEstadoTablero($partidaId);
+            $partida = new Partida($partidaId, $p['modo']);
+            $tablero = $this->obtenerEstadoTablero($partidaId, $jugadorActualId);
         
         $validacionRecinto = $partida->validaRecinto($recinto, $slot, $especie, $tablero, $limite);
         if (!$validacionRecinto[0]) {
+                $this->db->rollBack();
             return ['ok' => false, 'msg' => $validacionRecinto[1]];
         }
         
         if ($p['modo'] === 'digitalizado' && $p['dado']) {
             $validacionDado = $partida->validaCara($p['dado'], $recinto, $slot, $especie, $tablero);
             if (!$validacionDado[0]) {
+                    $this->db->rollBack();
                 return ['ok' => false, 'msg' => $validacionDado[1]];
             }
         }
 
-        $ins = $this->db->prepare("INSERT INTO colocaciones (partida_id, recinto, especie, slot) VALUES (?, ?, ?, ?)");
-        $ins->execute([$partidaId, $recinto, $especie, $slot]);
-
-        $this->actualizarPuntuacionJugador($partidaId, $jugadorId);
-
-        $jugadaActual = $this->obtenerPasoActual($partidaId);
-        if ($jugadaActual > 12) {
-            $this->db->prepare("UPDATE partidas SET estado='fin' WHERE id=?")->execute([$partidaId]);
-            return ['ok' => true, 'msg' => 'Partida completada - 12 jugadas terminadas'];
-        }
-        
-        if ($p['modo'] === 'seguimiento') {
-            $paso = $this->obtenerPasoActual($partidaId);
-            $totalPasos = count($this->planSeguimiento);
-            
-            if ($paso > $totalPasos) {
-                $this->db->prepare("UPDATE partidas SET estado='fin' WHERE id=?")->execute([$partidaId]);
-                return ['ok' => true, 'msg' => 'Tutorial completado - Puntuación máxima alcanzada'];
+            try {
+                $ins = $this->db->prepare("INSERT INTO colocaciones (partida_id, jugador_id, recinto, especie, slot) VALUES (?, ?, ?, ?, ?)");
+                $ins->execute([$partidaId, $jugadorActualId, $recinto, $especie, $slot]);
+            } catch (PDOException $e) {
+                $this->db->rollBack();
+                if ($e->getCode() == '23000') {
+                    return ['ok' => false, 'msg' => 'Error de BD: Ejecuta actualizar_bd.sql'];
+                }
+                return ['ok' => false, 'msg' => 'Error guardando colocación'];
             }
-        }
+        
+            $this->gestorManos->quitarDinosaurio($partidaId, $jugadorActualId, $especie);
+            $this->actualizarPuntuacionJugador($partidaId, $jugadorActualId);
 
+            $this->marcarJugadorColoco($partidaId, $jugadorActualId);
+            
+            $checkPartida2 = $this->db->prepare("SELECT jugadores_colocaron FROM partidas WHERE id = ? FOR UPDATE");
+            $checkPartida2->execute([$partidaId]);
+            $jugadoresColocaronStr2 = $checkPartida2->fetchColumn();
+            $colocaron = json_decode($jugadoresColocaronStr2 ?? '[]', true);
+            
+            $ordenJugadores = $this->obtenerOrdenJugadores($partidaId);
+            $totalJugadores = count($ordenJugadores);
+            $colocaronCount = count($colocaron);
+            
+            $todosColocaron = ($colocaronCount === $totalJugadores);
+            
+            if ($todosColocaron) {
+                $this->avanzarTurnoYRonda($partidaId);
+                
+                $primerJugador = $this->db->prepare("SELECT id FROM jugadores_partida WHERE partida_id = ? ORDER BY orden ASC LIMIT 1");
+                $primerJugador->execute([$partidaId]);
+                $primerJugadorId = $primerJugador->fetchColumn();
+                
+                if ($primerJugadorId) {
+                    $this->db->prepare("UPDATE partidas SET turno_id = ? WHERE id = ?")
+                             ->execute([$primerJugadorId, $partidaId]);
+                }
+                
         if ($p['modo'] === 'digitalizado') {
             $this->db->prepare("UPDATE partidas SET dado=NULL, estado='dado' WHERE id=?")->execute([$partidaId]);
         }
-        $this->avanzarTurno($partidaId);
+            } else {
+                $siguienteJugadorId = $this->siguienteJugadorId($partidaId);
+                
+                if ($siguienteJugadorId) {
+                    $this->db->prepare("UPDATE partidas SET turno_id = ? WHERE id = ?")
+                             ->execute([$siguienteJugadorId, $partidaId]);
+                }
+            }
+
+            $this->db->commit();
 
         return ['ok' => true, 'msg' => 'Dinosaurio colocado correctamente'];
+            
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ['ok' => false, 'msg' => 'Error inesperado: ' . $e->getMessage()];
+        }
     }
 
     public function colocaciones(int $partidaId): array
@@ -348,7 +577,7 @@ class GameController
         $p = $this->buscarPartida($partidaId);
         if (!$p) return ['ok' => false, 'msg' => 'Partida no encontrada'];
 
-        $st = $this->db->prepare("SELECT usuario_id, nombre, puntos FROM jug_partida WHERE partida_id = ? ORDER BY puntos DESC");
+        $st = $this->db->prepare("SELECT usuario_id, nombre, puntos FROM jugadores_partida WHERE partida_id = ? ORDER BY puntos DESC");
         $st->execute([$partidaId]);
         $jugadores = $st->fetchAll(PDO::FETCH_ASSOC);
 
@@ -360,7 +589,8 @@ class GameController
         $p = $this->buscarPartida($partidaId);
         if (!$p) return ['ok' => false, 'msg' => 'Partida no encontrada'];
 
-        if ($p['turno_id'] != $jugadorId) {
+        // Verificar turno solo si existe turno_id en la partida
+        if (isset($p['turno_id']) && $p['turno_id'] != $jugadorId) {
             return ['ok' => false, 'msg' => 'No es tu turno'];
         }
 
@@ -377,19 +607,11 @@ class GameController
         $st->execute([$partidaId]);
         $coloc = $st->fetchAll(PDO::FETCH_ASSOC);
 
-        $st = $this->db->prepare("SELECT usuario_id, nombre, orden, puntos FROM jug_partida WHERE partida_id = ? ORDER BY orden ASC");
+        $st = $this->db->prepare("SELECT usuario_id, nombre, orden, puntos FROM jugadores_partida WHERE partida_id = ? ORDER BY orden ASC");
         $st->execute([$partidaId]);
         $jugadores = $st->fetchAll(PDO::FETCH_ASSOC);
 
         $jugadorEnTurno = null;
-        if ($p['turno_id']) {
-            foreach ($jugadores as $j) {
-                if ($j['usuario_id'] == $p['turno_id']) {
-                    $jugadorEnTurno = $j;
-                    break;
-                }
-            }
-        }
 
         $dado = ($p['modo'] === 'digitalizado') ? ($p['dado'] ?? null) : null;
         
@@ -406,14 +628,12 @@ class GameController
             'jugada' => $jugadaActual,
             'estado' => $partidaTerminada ? 'fin' : (string)$p['estado'],
             'dado' => $dado,
-            'turno_id' => (int)($p['turno_id'] ?? 0),
+            'turno_id' => null,
             'jugador_en_turno' => $jugadorEnTurno,
             'jugadores' => $jugadores,
             'colocaciones' => $coloc
         ];
-        
 
-        // Agregar información del tutorial para modo seguimiento
         if ($p['modo'] === 'seguimiento') {
             $paso = count($coloc) + 1;
             $totalPasos = count($this->planSeguimiento);
